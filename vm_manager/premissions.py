@@ -16,15 +16,16 @@ class MyCustomIsAuthenticated(permissions.BasePermission):
         token = authorization_header.split(' ')[1]
         username = User.objects.get(id=Token.objects.get(key=token).user_id).username
         if username == 'admin':
+            request.allowed_vms = ['VM1', 'VM2']
             return True
         elif username == 'user1':
-            allowed_vms = ['VM1', ]
+            request.allowed_vms = ['VM1']
             requested_vms = [
                 request.data.get('vmName', ''),
                 request.data.get('sourceVmName', ''),
                 request.data.get('destVmName', '')
             ]
             for vm in requested_vms:
-                if vm and vm not in allowed_vms:
+                if vm and not vm == 'VM1':
                     return False
         return True

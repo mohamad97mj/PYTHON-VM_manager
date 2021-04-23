@@ -20,7 +20,7 @@ class ManagerView(APIView):
         data = request.data
         command = data.get('command', '')
         if command:
-            return Response(run(command, data))
+            return Response(run(command, data, request.allowed_vms))
         else:
             return Response({'detail': 'No command was provided!'})
 
