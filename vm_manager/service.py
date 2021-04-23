@@ -1,5 +1,5 @@
 import virtualbox
-from virtualbox.library import MachineState
+from virtualbox.library import MachineState, LockType
 
 vbox = virtualbox.VirtualBox()
 
@@ -50,11 +50,15 @@ class VmManager:
             session = virtualbox.Session()
             progress = machine.launch_vm_process(session, "gui", [])
             # progress.wait_for_completion()
-        return {
-            'command': 'on',
-            'vmName': vm_name,
-            'status': 'pwering on'
-        }
+            return {
+                'command': 'on',
+                'vmName': vm_name,
+                'status': 'pwering on'
+            }
+        else:
+            return {
+                'detail': 'not allowed'
+            }
 
     @staticmethod
     def off(data, allowed_vms):
@@ -64,15 +68,36 @@ class VmManager:
             session = machine.create_session()
             session.console.power_down()
 
-        return {
-            'command': 'off',
-            'vmName': vm_name,
-            'status': 'pwering off'
-        }
+            return {
+                'command': 'off',
+                'vmName': vm_name,
+                'status': 'pwering off'
+            }
+        else:
+            return {
+                'detail': 'not allowed'
+            }
 
     @staticmethod
     def setting(data, allowed_vms):
-        return {'command': 'setting'}
+        vm_name = data.get('vmName', '')
+        if vm_name and vm_name in allowed_vms:
+            cpu = int(data.get('cpu'))
+            ram = int(data.get('ram'))
+            machine = vbox.find_machine(vm_name)
+            session = machine.create_session(LockType.write)
+            session.machine.cpu_count = cpu
+            session.machine.memory_size = ram
+            session.machine.save_settings()
+            session.unlock_machine()
+
+        return {
+            'command': 'setting',
+            'vmName': vm_name,
+            'cpu': '',
+            'ram': '',
+            'status': 'ok'
+        }
 
     @staticmethod
     def clone(data, allowed_vms):
