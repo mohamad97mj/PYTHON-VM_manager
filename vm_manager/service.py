@@ -1,5 +1,5 @@
 import virtualbox
-from virtualbox.library import MachineState, LockType
+from virtualbox.library import MachineState, LockType, CloneMode, IMachine
 
 vbox = virtualbox.VirtualBox()
 
@@ -91,17 +91,37 @@ class VmManager:
             session.machine.save_settings()
             session.unlock_machine()
 
-        return {
-            'command': 'setting',
-            'vmName': vm_name,
-            'cpu': '',
-            'ram': '',
-            'status': 'ok'
-        }
+            return {
+                'command': 'setting',
+                'vmName': vm_name,
+                'cpu': cpu,
+                'ram': ram,
+                'status': 'ok'
+            }
+
+        else:
+            return {
+                'detail': 'not allowed'
+            }
 
     @staticmethod
     def clone(data, allowed_vms):
-        return {'command': 'clone'}
+        src_vm_name = data.get('sourceVmName', '')
+        dst_vm_name = data.get('destVmName', '')
+        if src_vm_name in allowed_vms:
+            dst_machine = vbox.create_machine('', dst_vm_name, [], '', '')
+            src_machine = vbox.find_machine(src_vm_name)
+            src_machine.clone_to(dst_machine, CloneMode.machine_state, [])
+            return {
+                'command': 'clone',
+                'sourceVmName': src_vm_name,
+                'destVmName': dst_vm_name,
+                'status': 'ok'
+            }
+        else:
+            return {
+                'detail': 'not allowed'
+            }
 
     @staticmethod
     def delete(data, allowed_vms):
