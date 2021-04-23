@@ -44,14 +44,30 @@ class VmManager:
 
     @staticmethod
     def on(data, allowed_vms):
+        vm_name = data.get('vmName', '')
+        if vm_name and vm_name in allowed_vms:
+            machine = vbox.find_machine(vm_name)
+            session = virtualbox.Session()
+            progress = machine.launch_vm_process(session, "gui", [])
+            # progress.wait_for_completion()
         return {
-            'command': 'on'
+            'command': 'on',
+            'vmName': vm_name,
+            'status': 'pwering on'
         }
 
     @staticmethod
     def off(data, allowed_vms):
+        vm_name = data.get('vmName', '')
+        if vm_name and vm_name in allowed_vms:
+            machine = vbox.find_machine(vm_name)
+            session = machine.create_session()
+            session.console.power_down()
+
         return {
-            'command': 'off'
+            'command': 'off',
+            'vmName': vm_name,
+            'status': 'pwering off'
         }
 
     @staticmethod
