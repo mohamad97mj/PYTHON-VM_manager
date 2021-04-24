@@ -1,5 +1,5 @@
 import virtualbox
-from virtualbox.library import MachineState, LockType, CloneMode, IMachine
+from virtualbox.library import MachineState, LockType, CloneMode, IGuestSession
 
 vbox = virtualbox.VirtualBox()
 
@@ -125,14 +125,34 @@ class VmManager:
 
     @staticmethod
     def delete(data, allowed_vms):
-        return {'command': 'delete'}
+        vm_name = data.get('vmName', '')
+        if vm_name and vm_name in allowed_vms:
+            machine = vbox.find_machine(vm_name)
+            machine.remove(delete=True)
+            return {
+                'command': 'delete',
+                'vmName': vm_name,
+            }
+        else:
+            return {
+                'detail': 'not allowed'
+            }
 
     @staticmethod
     def execute(data, allowed_vms):
+        vm_name = data.get('vmName', '')
+        if vm_name and vm_name in allowed_vms:
+            machine = vbox.find_machine(vm_name)
+            session = machine.create_session()
+            gs = session.console.guest.create_session(vm_name.lower(), vm_name.lower())
+            input = data.get('input', '')
+            process, stdout, stderr = gs.execute(input, [])
         return {'command': 'execute'}
 
     @staticmethod
     def transfer(data, allowed_vms):
+        session = IGuestSession()
+        session.fs_obj_move('VM1/home/vm1/x.txt', 'VM2/home/vm2/', [])
         return {'command': 'transfer'}
 
 
